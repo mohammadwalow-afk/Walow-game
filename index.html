@@ -2,49 +2,79 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>walow game - محرك ألعاب 3D الذكي</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>walow game - محرك الألعاب</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #111; font-family: Tahoma, sans-serif; }
+        
+        /* شاشة عرض اللعبة */
+        #game-container { width: 100%; height: 55%; position: relative; background: #222; }
+        
+        /* واجهة الدردشة والتحكم */
+        #chat-container { width: 100%; height: 45%; background: #181818; display: flex; flex-direction: column; border-top: 2px solid #333; }
+        
+        #preview-box { display: none; padding: 6px 10px; background: #222; align-items: center; gap: 10px; border-bottom: 1px solid #333; }
+        #upload-preview { max-height: 40px; border-radius: 4px; }
+        
+        #chat-messages { flex: 1; overflow-y: auto; padding: 10px; font-size: 13px; display: flex; flex-direction: column; gap: 6px; }
+        .msg { padding: 8px 12px; border-radius: 8px; max-width: 85%; word-break: break-word; line-height: 1.4; }
+        .msg.user { background: #007acc; color: #fff; align-self: flex-end; }
+        .msg.ai { background: #2a2a2a; color: #ddd; align-self: flex-start; }
+        
+        .input-bar { display: flex; padding: 10px; background: #202020; gap: 6px; align-items: center; }
+        .input-bar input[type="text"] { flex: 1; padding: 10px; border-radius: 6px; border: none; background: #2d2d2d; color: #fff; outline: none; font-size: 14px; }
+        .input-bar button { padding: 10px 16px; background: #00ffcc; color: #000; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        .camera-btn { background: #333 !important; color: #fff !important; padding: 10px 12px !important; }
+    </style>
 </head>
 <body>
-    <div id="app-container">
-        <!-- شاشة المعاينة الحية للعبة قبل التثبيت -->
-        <div id="viewport-container">
-            <div id="canvas-target"></div>
-            <div id="engine-hud">walow game | الفيزياء والتصادم مفعلان</div>
-            <div id="preview-badge">معاينة حية</div>
-            <button id="btn-fullscreen" onclick="togglePreviewMode()">ملء الشاشة للعب</button>
+
+    <!-- مشهد اللعبة -->
+    <div id="game-container"></div>
+
+    <!-- صندوق المحادثة والذكاء الاصطناعي -->
+    <div id="chat-container">
+        <div id="preview-box">
+            <img id="upload-preview" src="" alt="Preview">
+            <button onclick="clearImage()" style="background:red; color:white; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:12px;">حذف الصورة</button>
         </div>
-
-        <!-- لوحة المحادثة وبناء الألعاب وتحليل الصور -->
-        <div id="chat-container">
-            <div id="chat-messages">
-                <div class="msg ai">أهلاً بك في محرك <b>walow game</b>! صف لي اللعبة الثلاثية الأبعاد التي تريد بناءها، أو التقط صورة لجبل/مدينة لتحويلها إلى بيئة لعب، أو ارفع صورة خطأ لأصلحه فوراً.</div>
-            </div>
-            
-            <div id="preview-box" style="display:none;">
-                <img id="upload-preview" src="" alt="معاينة الصورة">
-                <span id="img-mode-label">صورة مرفقة</span>
-                <button id="remove-img" onclick="clearImage()">✕</button>
-            </div>
-
-            <div id="input-area">
-                <input type="file" id="image-input" accept="image/*" style="display:none" onchange="handleImage(event)">
-                <button id="btn-upload" title="رفع صورة بيئة أو لقطة خطأ" onclick="document.getElementById('image-input').click()">📷</button>
-                <input type="text" id="user-input" placeholder="اطلب من walow game بناء لعبة أو تعديلها..." onkeydown="if(event.key==='Enter') sendMessage()">
-                <button id="btn-send" onclick="sendMessage()">بناء</button>
-            </div>
+        
+        <div id="chat-messages">
+            <div class="msg ai">أهلاً بك في محرك walow game! اضغط على زر **🔑 مفتاح AI** أعلى الشاشة لإدخال مفتاحك وابدأ إعطاء الأوامر.</div>
+        </div>
+        
+        <div class="input-bar">
+            <input type="file" id="image-input" accept="image/*" style="display:none;" onchange="handleImage(event)">
+            <button class="camera-btn" onclick="document.getElementById('image-input').click()">📷</button>
+            <input type="text" id="chat-input" placeholder="اطلب بناء لعبة أو تعديل المشهد..." />
+            <button onclick="handleUserSubmit()">إرسال</button>
         </div>
     </div>
 
+    <!-- استدعاء ملف الجسر مع رقم إصدار إجباري لتجنب الكاش -->
+    <script src="ai-bridge.js?v=999"></script>
+    
     <script>
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Error:', err));
+        function handleUserSubmit() {
+            const input = document.getElementById('chat-input');
+            const text = input.value.trim();
+            if(!text) return;
+            
+            appendMessage(text, 'user');
+            input.value = '';
+            
+            // التحقق من وجود المفتاح قبل الإرسال
+            const apiKey = typeof getApiKey === 'function' ? getApiKey() : '';
+            if(!apiKey) {
+                appendMessage("⚠️ تنبيه: يجيب الضغط على زر (🔑 مفتاح AI) في أعلى الشاشة وإدخال مفتاح Gemini API أولاً لتفعيل التوليد.", 'ai');
+                return;
+            }
+            
+            // محاكاة استجابة المحرك أو إرسال الطلب
+            appendMessage("جاري معالجة طلبك بواسطة الذكاء الاصطناعي...", 'ai');
         }
     </script>
-    <script src="engine.js"></script>
-    <script src="ai-bridge.js"></script>
 </body>
 </html>
