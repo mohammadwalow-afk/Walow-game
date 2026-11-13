@@ -1,15 +1,38 @@
 let base64Image = null;
 
-// دالة جلب أو حفظ المفتاح محلياً بأمان تام على هاتفك فقط
+// دالة جلب المفتاح مباشرة من واجهة التطبيق أو التخزين المحلي
 function getApiKey() {
-    let key = localStorage.getItem('walow_gemini_key');
-    if (!key) {
-        key = prompt("أدخل مفتاح Gemini API الخاص بك (سيتم حفظه بأمان على هاتفك فقط):");
-        if (key) {
-            localStorage.setItem('walow_gemini_key', key.trim());
-        }
+    let inputField = document.getElementById('api-key-input');
+    if (inputField && inputField.value.trim() !== '') {
+        localStorage.setItem('walow_gemini_key', inputField.value.trim());
+        return inputField.value.trim();
     }
-    return key || "";
+    return localStorage.getItem('walow_gemini_key') || '';
+}
+
+// حقن واجهة إدخال المفتاح في الشاشة تلقائياً إذا لم تكن موجودة
+window.addEventListener('DOMContentLoaded', () => {
+    if (!document.getElementById('api-key-container')) {
+        const container = document.createElement('div');
+        container.id = 'api-key-container';
+        container.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: rgba(0,0,0,0.8); padding: 8px; border-radius: 8px; display: flex; gap: 5px;';
+        
+        const savedKey = localStorage.getItem('walow_gemini_key') || '';
+        container.innerHTML = `
+            <input type="password" id="api-key-input" placeholder="أدخل Gemini API Key" value="${savedKey}" style="padding: 5px; border-radius: 4px; border: none; font-size: 12px; width: 130px;" />
+            <button onclick="saveApiKeyBtn()" style="padding: 5px 8px; background: #00ffcc; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px;">حفظ</button>
+        `;
+        document.body.appendChild(container);
+    }
+});
+
+function saveApiKeyBtn() {
+    const key = getApiKey();
+    if (key) {
+        alert('تم حفظ المفتاح بنجاح على هاتفك!');
+    } else {
+        alert('الرجاء إدخال مفتاح صحيح.');
+    }
 }
 
 function handleImage(event) {
@@ -38,46 +61,4 @@ function appendMessage(text, sender) {
     msgDiv.innerText = text;
     chatMessages.appendChild(msgDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-async function sendMessage() {
-    const input = document.getElementById('user-input');
-    const text = input.value.trim();
-    if (!text && !base64Image) return;
-
-    const apiKey = getApiKey();
-    if (!apiKey) {
-        appendMessage("⚠️ يجب إدخال مفتاح Gemini API لبدء البناء.", "ai");
-        return;
-    }
-
-    if (text) appendMessage(text, "user");
-    input.value = '';
-    appendMessage("جاري البرمجة والبناء...", "ai");
-
-    try {
-        const parts = [{ text: "أنت محرك بناء ألعاب ثلاثية الأبعاد باستخدام Three.js. اكتب كود JavaScript فقط بدون أي شرح أو علامات ماركداون لتنفيذ الطلب التالي داخل مشهد scene موجود مسبقاً: " + text }];
-        if (base64Image) {
-            const base64Data = base64Image.split(',')[1];
-            const mimeType = base64Image.split(';')[0].split(':')[1];
-            parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
-            clearImage();
-        }
- {
-                    const response = await fetch("https://googleapis.com" + apiKey, {
-
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: parts }] })
-        });
-
-        const data = await response.json();
-        if (data.error) throw new Error(data.error.message);
-
-        let code = data.candidates[0].content.parts[0].text;
-        code = code.replace(/```javascript|```js|```/g, '').trim();
-
-        new Function(code)();
-        appendMessage("✅ تم تنفيذ التعديل في عالم اللعبة بنجاح!", "ai");
-    } catch (error) {
-        appendMessage("❌ حدث خطأ: " + error.message, "ai");
-    }
 }
