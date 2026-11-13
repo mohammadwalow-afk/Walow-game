@@ -1,48 +1,33 @@
-
 let base64Image = null;
 
-// دالة لجلب المفتاح مباشرة من التخزين المحلي أو من خانة الإدخال إذا وجدت
+// دالة لجلب المفتاح بأمان من التخزين المحلي
 function getApiKey() {
-    // 1. محاولة جلبه من الذاكرة المحلية المخزنة مسبقاً
-    let key = localStorage.getItem('walow_gemini_key');
-    if (key && key.trim() !== '') return key.trim();
-
-    // 2. إذا لم يكن مخزناً، نبحث عن خانة الإدخال في الصفحة
-    const inputField = document.getElementById('api-key-input');
-    if (inputField && inputField.value.trim() !== '') {
-        key = inputField.value.trim();
-        localStorage.setItem('walow_gemini_key', key);
-        return key;
-    }
-
-    return '';
+    return localStorage.getItem('walow_gemini_key') || '';
 }
 
-// حقن واجهة إدخال المفتاح في الشاشة تلقائياً
+// إنشاء زر إعدادات دائم وواضح في الشاشة لا يمكن اختفاؤه
 window.addEventListener('DOMContentLoaded', () => {
-    if (!document.getElementById('api-key-container')) {
-        const container = document.createElement('div');
-        container.id = 'api-key-container';
-        container.style.cssText = 'position: fixed; top: 10px; right: 10px; z-index: 9999; background: rgba(0,0,0,0.85); padding: 6px 10px; border-radius: 8px; display: flex; gap: 5px; box-shadow: 0 4px 10px rgba(0,0,0,0.3);';
+    if (!document.getElementById('walow-settings-btn')) {
+        const btn = document.createElement('button');
+        btn.id = 'walow-settings-btn';
+        btn.innerHTML = '🔑 مفتاح AI';
+        btn.style.cssText = 'position: fixed; top: 10px; left: 10px; z-index: 999999; background: #ffcc00; color: #000; border: none; padding: 8px 14px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);';
         
-        const savedKey = localStorage.getItem('walow_gemini_key') || '';
-        container.innerHTML = `
-            <input type="password" id="api-key-input" placeholder="أدخل Gemini API Key" value="${savedKey}" style="padding: 5px; border-radius: 4px; border: none; font-size: 12px; width: 120px; outline: none;" />
-            <button onclick="saveApiKeyBtn()" style="padding: 5px 10px; background: #00ffcc; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 12px; color: #000;">حفظ</button>
-        `;
-        document.body.appendChild(container);
+        btn.onclick = () => {
+            const currentKey = localStorage.getItem('walow_gemini_key') || '';
+            const newKey = prompt("أدخل مفتاح Gemini API الخاص بك هنا:", currentKey);
+            if (newKey !== null) {
+                localStorage.setItem('walow_gemini_key', newKey.trim());
+                if (newKey.trim() !== '') {
+                    alert('✅ تم حفظ المفتاح بنجاح! يمكنك الآن إعطاء الأوامر للمحرك.');
+                } else {
+                    alert('⚠️ تم مسح المفتاح.');
+                }
+            }
+        };
+        document.body.appendChild(btn);
     }
 });
-
-function saveApiKeyBtn() {
-    const inputField = document.getElementById('api-key-input');
-    if (inputField && inputField.value.trim() !== '') {
-        localStorage.setItem('walow_gemini_key', inputField.value.trim());
-        alert('تم حفظ المفتاح بنجاح! يمكنك الآن إعطاء الأوامر للمحرك.');
-    } else {
-        alert('الرجاء إدخال مفتاح صحيح أولاً.');
-    }
-}
 
 function handleImage(event) {
     const file = event.target.files[0];
