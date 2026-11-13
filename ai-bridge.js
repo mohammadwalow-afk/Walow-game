@@ -1,7 +1,7 @@
 let base64Image = null;
 
 // ضع مفتاح Gemini API الخاص بك هنا ليعمل الذكاء الاصطناعي الفعلي في بناء الألعاب وتحليل الصور
-const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+const GEMINI_API_KEY = "";
 
 function handleImage(event) {
     const file = event.target.files[0];
