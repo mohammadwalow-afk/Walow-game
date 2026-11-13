@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>walow game - محرك ألعاب 3D الذكي</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <div id="app-container">
+        <!-- شاشة المعاينة الحية للعبة قبل التثبيت -->
+        <div id="viewport-container">
+            <div id="canvas-target"></div>
+            <div id="engine-hud">walow game | الفيزياء والتصادم مفعلان</div>
+            <div id="preview-badge">معاينة حية</div>
+            <button id="btn-fullscreen" onclick="togglePreviewMode()">ملء الشاشة للعب</button>
+        </div>
+
+        <!-- لوحة المحادثة وبناء الألعاب وتحليل الصور -->
+        <div id="chat-container">
+            <div id="chat-messages">
+                <div class="msg ai">أهلاً بك في محرك <b>walow game</b>! صف لي اللعبة الثلاثية الأبعاد التي تريد بناءها، أو التقط صورة لجبل/مدينة لتحويلها إلى بيئة لعب، أو ارفع صورة خطأ لأصلحه فوراً.</div>
+            </div>
+            
+            <div id="preview-box" style="display:none;">
+                <img id="upload-preview" src="" alt="معاينة الصورة">
+                <span id="img-mode-label">صورة مرفقة</span>
+                <button id="remove-img" onclick="clearImage()">✕</button>
+            </div>
+
+            <div id="input-area">
+                <input type="file" id="image-input" accept="image/*" style="display:none" onchange="handleImage(event)">
+                <button id="btn-upload" title="رفع صورة بيئة أو لقطة خطأ" onclick="document.getElementById('image-input').click()">📷</button>
+                <input type="text" id="user-input" placeholder="اطلب من walow game بناء لعبة أو تعديلها..." onkeydown="if(event.key==='Enter') sendMessage()">
+                <button id="btn-send" onclick="sendMessage()">بناء</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(err => console.log('SW Error:', err));
+        }
+    </script>
+    <script src="engine.js"></script>
+    <script src="ai-bridge.js"></script>
+</body>
+</html>
