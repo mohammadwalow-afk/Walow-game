@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><title>مولد أيقونات walow game</title></head>
+<body style="background:#111; color:#fff; font-family:Tahoma; text-align:center; padding:30px;">
+    <h2>تحميل أيقونات تطبيق walow game لرفعها على GitHub:</h2>
+    <button onclick="downloadIcon(192)" style="padding:12px 20px; font-size:16px; margin:10px; background:#00ffcc; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">تحميل icon-192.png</button>
+    <button onclick="downloadIcon(512)" style="padding:12px 20px; font-size:16px; margin:10px; background:#00ffcc; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">تحميل icon-512.png</button>
+
+    <script>
+        function downloadIcon(size) {
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, size, size);
+
+            ctx.strokeStyle = '#00ffcc';
+            ctx.lineWidth = size * 0.05;
+            ctx.strokeRect(size * 0.08, size * 0.08, size * 0.84, size * 0.84);
+
+            ctx.fillStyle = '#00ffcc';
+            ctx.font = `bold ${size * 0.18}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('WALOW', size / 2, size * 0.42);
+            
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `bold ${size * 0.14}px Arial`;
+            ctx.fillText('GAME', size / 2, size * 0.62);
+
+            const link = document.createElement('a');
+            link.download = `icon-${size}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+    </script>
+</body>
+</html>
