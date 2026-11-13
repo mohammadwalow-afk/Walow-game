@@ -39,3 +39,45 @@ function appendMessage(text, sender) {
     chatMessages.appendChild(msgDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+async function sendMessage() {
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text && !base64Image) return;
+
+    const apiKey = getApiKey();
+    if (!apiKey) {
+        appendMessage("⚠️ يجب إدخال مفتاح Gemini API لبدء البناء.", "ai");
+        return;
+    }
+
+    if (text) appendMessage(text, "user");
+    input.value = '';
+    appendMessage("جاري البرمجة والبناء...", "ai");
+
+    try {
+        const parts = [{ text: "أنت محرك بناء ألعاب ثلاثية الأبعاد باستخدام Three.js. اكتب كود JavaScript فقط بدون أي شرح أو علامات ماركداون لتنفيذ الطلب التالي داخل مشهد scene موجود مسبقاً: " + text }];
+        if (base64Image) {
+            const base64Data = base64Image.split(',')[1];
+            const mimeType = base64Image.split(';')[0].split(':')[1];
+            parts.push({ inline_data: { mime_type: mimeType, data: base64Data } });
+            clearImage();
+        }
+ {
+                    const response = await fetch("https://googleapis.com" + apiKey, {
+
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: parts }] })
+        });
+
+        const data = await response.json();
+        if (data.error) throw new Error(data.error.message);
+
+        let code = data.candidates[0].content.parts[0].text;
+        code = code.replace(/```javascript|```js|```/g, '').trim();
+
+        new Function(code)();
+        appendMessage("✅ تم تنفيذ التعديل في عالم اللعبة بنجاح!", "ai");
+    } catch (error) {
+        appendMessage("❌ حدث خطأ: " + error.message, "ai");
+    }
+}
